@@ -1,0 +1,100 @@
+#include <WiFi.h>
+#include <WebServer.h>
+
+// 📡 Dades WiFi
+const char* ssid = "ProjectesSMX";
+const char* password = "Hola1234";
+
+// 🌐 Servidor web
+WebServer server(80);
+
+// 🔌 Pins
+const int pinLDR = 35;
+const int pinLM35 = 2;
+const int LED = 4;
+
+// 🔧 Funció pàgina principal
+void enviarPaginaPrincipal() {
+
+  // 📊 Lectura sensors
+  int valorLDR = analogRead(pinLDR);
+float tempC = (analogRead(pinLM35) * 3.3 / 4095.0) * 100.0;
+  // 🚨 Lògica d’alerta
+  String colorTemp = "#28a745"; // Verd
+  digitalWrite(LED, LOW);
+
+  if (tempC > 24.0) {
+    colorTemp = "#dc3545"; // Vermell
+    digitalWrite(LED, HIGH);
+  }
+
+  // 🌍 HTML
+  String html = "<html><head>";
+  html += "<meta charset='UTF-8'>";
+  html += "<meta http-equiv='refresh' content='5'>";
+  html += "<style>";
+  html += "body{font-family:sans-serif; text-align:center; background:#f4f4f4;}";
+  html += ".card{padding:20px; color:white; display:inline-block; margin:10px; border-radius:10px;}";
+  html += "</style>";
+  html += "</head><body>";
+
+  html += "<h1>Monitor CPD</h1>";
+
+  html += "<div class='card' style='background:" + colorTemp + ";'>";
+  html += "<h3>Temperatura</h3>";
+  html += "<p>" + String(tempC, 1) + " °C</p>";
+  html += "</div>";
+
+  html += "<div class='card' style='background:#007bff;'>";
+  html += "<h3>Llum (LDR)</h3>";
+  html += "<p>" + String(valorLDR) + "</p>";
+  html += "</div>";
+
+  html += "<br><a href='/credits'>Crèdits</a>";
+
+  html += "</body></html>";
+
+  server.send(200, "text/html", html);
+}
+
+// 📄 Pàgina secundària
+void credits() {
+  String html = "<html><body style='text-align:center; font-family:sans-serif;'>";
+  html += "<h1>Projecte ESP32</h1>";
+  html += "<p>Fet per Dani</p>";
+  html += "<a href='/'>Tornar</a>";
+  html += "</body></html>";
+
+  server.send(200, "text/html", html);
+}
+
+// ⚙️ Setup
+void setup() {
+  Serial.begin(115200);
+
+  pinMode(LED, OUTPUT);
+
+  // 📡 Connexió WiFi
+  WiFi.begin(ssid, password);
+  Serial.print("Connectant...");
+
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+
+  Serial.println("\nConnectat!");
+  Serial.print("IP: ");
+  Serial.println(WiFi.localIP());
+
+  // 🌐 Rutes web
+  server.on("/", enviarPaginaPrincipal);
+  server.on("/credits", credits);
+
+  server.begin();
+}
+
+// 🔁 Loop
+void loop() {
+  server.handleClient();
+}
