@@ -1,0 +1,39 @@
+#include <WiFi.h>
+#include <WebServer.h>
+
+const char* ssid = "ProjectesSMX";
+const char* password = "Hola1234";
+
+WebServer server(80);
+
+// 📄 Funció que envia el "Hola"
+void enviarPaginaPrincipal() {
+  server.send(200, "text/plain", "Hola");
+}
+
+void setup() {
+  Serial.begin(115200);
+
+  // Connexió WiFi
+  WiFi.begin(ssid, password);
+  Serial.print("Connectant...");
+
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+
+  Serial.println("\nConnectat!");
+  Serial.print("IP: ");
+  Serial.println(WiFi.localIP());
+
+  // Ruta web
+  server.on("/", enviarPaginaPrincipal);
+
+  // Iniciar servidor
+  server.begin();
+}
+
+void loop() {
+  server.handleClient();
+}
